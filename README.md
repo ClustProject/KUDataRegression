@@ -85,7 +85,6 @@
 
 #### 1. FC (w/ data representation)
 - **input_size** : 데이터의 변수 개수, int
-- **num_classes** : 분류할 class 개수, int
 - **dropout** : dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
 - **bias** : bias 사용 여부, bool(default: True)
 - **num_epochs** : 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
