@@ -53,6 +53,7 @@ def sequence_preprocessing(data_x, data_y, timestep, need_yhist, shift_size):
     targets = np.array(targets)
 
     if need_yhist == False:
+        print(X.shape)
         X = X.transpose(0, 2, 1)
 
     return X, targets, y_hist
@@ -111,7 +112,6 @@ class Regression():
             init_model = RNN_model(
                 rnn_type='lstm',
                 input_size=self.parameter['input_size'],
-                num_classes=self.parameter['num_classes'],
                 hidden_size=self.parameter['hidden_size'],
                 num_layers=self.parameter['num_layers'],
                 bidirectional=self.parameter['bidirectional'],
@@ -121,7 +121,6 @@ class Regression():
             init_model = RNN_model(
                 rnn_type='gru',
                 input_size=self.parameter['input_size'],
-                num_classes=self.parameter['num_classes'],
                 hidden_size=self.parameter['hidden_size'],
                 num_layers=self.parameter['num_layers'],
                 bidirectional=self.parameter['bidirectional'],
@@ -130,7 +129,6 @@ class Regression():
         elif self.model == 'CNN_1D':
             init_model = CNN_1D(
                 input_channels=self.parameter['input_size'],
-                num_classes=self.parameter['num_classes'],
                 input_seq=self.parameter['seq_len'],
                 output_channels=self.parameter['output_channels'],
                 kernel_size=self.parameter['kernel_size'],
@@ -141,7 +139,6 @@ class Regression():
         elif self.model == 'LSTM_FCNs':
             init_model = LSTM_FCNs(
                 input_size=self.parameter['input_size'],
-                num_classes=self.parameter['num_classes'],
                 num_layers=self.parameter['num_layers'],
                 lstm_drop_p=self.parameter['lstm_drop_out'],
                 fc_drop_p=self.parameter['fc_drop_out']
@@ -229,9 +226,9 @@ class Regression():
         init_model.load_state_dict(torch.load(best_model_path))
 
         # get prediction and accuracy
-        pred, mse = self.trainer.test(init_model, self.test_loader)
+        y_true, pred, mse, r2 = self.trainer.test(init_model, self.test_loader)
 
-        return pred, mse
+        return y_true, pred, mse, r2
 
 
     def get_loaders(self, train_data, test_data, batch_size, timestep, need_yhist, shift_size):
