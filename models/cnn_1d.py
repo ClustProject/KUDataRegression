@@ -1,4 +1,6 @@
 import torch.nn as nn
+import torch.optim as optim
+from models.train_model import Train_Test
 
 def calculate_output_length(input_seq, kernel_size, stride=1, padding=0, dilation=1):
     return (input_seq + 2 * padding - dilation * (kernel_size - 1) - 1) // stride + 1

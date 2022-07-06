@@ -1,4 +1,10 @@
+import numpy as np
+
+import torch
 import torch.nn as nn
+import torch.optim as optim
+from models.train_model import Train_Test
+
 
 class FC(nn.Module):
     def __init__(self, representation_size, drop_out, bias):
@@ -14,5 +20,4 @@ class FC(nn.Module):
 
     def forward(self, x):
         x = self.layer(x)
-
         return x

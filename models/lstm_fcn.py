@@ -79,5 +79,4 @@ class LSTM_FCNs(nn.Module):
         
         x_all = torch.cat((x1,x2),dim=1)
         x_out = self.fc(x_all)
-
         return x_out

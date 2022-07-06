@@ -1,68 +1,24 @@
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from models.train_model import Train_Test
 from models.lstm_fcn import LSTM_FCNs
 from models.rnn import RNN_model
 from models.cnn_1d import CNN_1D
 from models.fc import FC
-from models.darnn import DARNN
-
-from models.train_reg_model import Train_Test
 
 import warnings
 warnings.filterwarnings('ignore')
 
-# 시계열 데이터 전처리
-def sequence_preprocessing(data_x, data_y, timestep, need_yhist, shift_size):
-
-    """
-    Window slicing train/test data
-
-    :param data_x: X
-    :type config: pandas dataframe
-
-    :param data_y: y
-    :type train_data: pandas dataframe
-
-    :param timestep: timestep
-    :type test_data: int
-
-    :param need_yhist: need y_hist or not
-    :type test_data: boolean
-
-    :param shift_size: Slicing Shift Size
-    :type test_data: int
-    """
-
-    X = []
-    y_hist = []
-    targets = []
-
-    for start_idx in range(0, data_x.shape[0] - timestep + 1, shift_size):
-        X.append(data_x[start_idx:start_idx + timestep])
-        y_hist.append(data_y[start_idx:start_idx + timestep - 1])
-        targets.append(data_y[start_idx + timestep - 1])
-
-    X = np.array(X)
-
-    y_hist = np.array(y_hist).reshape(-1, timestep-1, 1)
-
-    targets = np.array(targets)
-
-    if need_yhist == False:
-        print(X.shape)
-        X = X.transpose(0, 2, 1)
-
-    return X, targets, y_hist
-
 
 class Regression():
-    def __init__(self, config, train_data, test_data, use_representation = False):
+    def __init__(self, config, train_data, test_data):
         """
-        Initialize Classification class and prepare dataloaders for training and testing
+        Initialize Regression class and prepare dataloaders for training and testing
 
         :param config: config
         :type config: dictionary
@@ -72,32 +28,46 @@ class Regression():
 
         :param test_data: test data with X and y
         :type test_data: dictionary
+        
+        example
+            >>> config = {
+                    'model': 'LSTM', # classification에 활용할 알고리즘 정의, {'LSTM', 'GRU', 'CNN_1D', 'LSTM_FCNs', 'FC'} 중 택 1
+                    'training': True,  # 학습 여부, 저장된 학습 완료 모델 존재시 False로 설정
+                    'best_model_path': './ckpt/lstm.pt',  # 학습 완료 모델 저장 경로
+                    'parameter': {
+                        'input_size': 24,  # 데이터의 변수 개수, int
+                        'num_layers': 2,  # recurrent layers의 수, int(default: 2, 범위: 1 이상)
+                        'hidden_size': 64,  # hidden state의 차원, int(default: 64, 범위: 1 이상)
+                        'dropout': 0.1,  # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
+                        'bidirectional': True,  # 모델의 양방향성 여부, bool(default: True)
+                        'num_epochs': 150,  # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
+                        'batch_size': 64,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+                        'lr': 0.0001,  # learning rate, float(default: 0.001, 범위: 0.1 이하)
+                        'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
+                    }
+                }
+            >>> data_reg = mr.Regression(config, train_data, test_data)
+            >>> model = data_reg.build_model()  # 모델 구축
+            >>> if config["training"]:
+            >>>     best_model = data_reg.train_model(model)  # 모델 학습
+            >>>     data_reg.save_model(best_model, best_model_path=config["best_model_path"])  # 모델 저장
+            >>> pred, mse, mae = data_reg.pred_data(model, best_model_path=config["best_model_path"])  # 예측
         """
 
         self.config = config
-        
         self.model = config['model']
         self.parameter = config['parameter']
 
         self.train_data = train_data
         self.test_data = test_data
 
-        if use_representation == True:
-            self.train_loader, self.valid_loader, self.test_loader = self.get_loaders_repr(train_data=self.train_data,
-                                                                                    test_data=self.test_data,
-                                                                                    batch_size=self.parameter['batch_size'])
-        else:
         # load dataloder
-            self.train_loader, self.valid_loader, self.test_loader = self.get_loaders(train_data=self.train_data,
-                                                                                        test_data=self.test_data,
-                                                                                        batch_size=self.parameter['batch_size'],
-                                                                                        timestep=self.parameter['timestep'],
-                                                                                        need_yhist=self.parameter['need_yhist'],
-                                                                                        shift_size=self.parameter['shift_size'])
-            
-        # build trainer
-        self.trainer = Train_Test(self.config, self.train_data, self.train_loader, self.valid_loader, self.test_loader)
+        self.train_loader, self.valid_loader, self.test_loader = self.get_loaders(train_data=self.train_data,
+                                                                                  test_data=self.test_data,
+                                                                                  batch_size=self.parameter['batch_size'])
 
+        # build trainer
+        self.trainer = Train_Test(self.config, self.train_loader, self.valid_loader, self.test_loader)
 
     def build_model(self):
         """
@@ -149,20 +119,9 @@ class Regression():
                 drop_out=self.parameter['drop_out'],
                 bias=self.parameter['bias']
             )
-        elif self.model == 'DARNN':
-            init_model = DARNN(
-                input_size = self.parameter['input_size'],
-                encoder_hidden_size = self.parameter['encoder_hidden_size'],
-                decoder_hidden_size = self.parameter['decoder_hidden_size'],
-                timestep = self.parameter['timestep'],
-                stateful_encoder = self.parameter['encoder_stateful'],
-                stateful_decoder = self.parameter['decoder_stateful']
-            )
         else:
             print('Choose the model correctly')
-
         return init_model
-
 
     def train_model(self, init_model):
         """
@@ -185,9 +144,7 @@ class Regression():
         optimizer = optim.Adam(init_model.parameters(), lr=self.parameter['lr'])
 
         best_model = self.trainer.train(init_model, dataloaders_dict, criterion, self.parameter['num_epochs'], optimizer)
-
         return best_model
-
 
     def save_model(self, best_model, best_model_path):
         """
@@ -203,7 +160,6 @@ class Regression():
         # save model
         torch.save(best_model.state_dict(), best_model_path)
 
-
     def pred_data(self, init_model, best_model_path):
         """
         Predict class based on the best trained model
@@ -213,10 +169,13 @@ class Regression():
         :param best_model_path: path for loading the best trained model
         :type best_model_path: str
 
-        :return: predicted value
+        :return: predicted values
         :rtype: numpy array
 
         :return: test mse
+        :rtype: float
+
+        :return: test mae
         :rtype: float
         """
 
@@ -226,12 +185,10 @@ class Regression():
         init_model.load_state_dict(torch.load(best_model_path))
 
         # get prediction and accuracy
-        y_true, pred, mse, r2 = self.trainer.test(init_model, self.test_loader)
-
-        return y_true, pred, mse, r2
-
-
-    def get_loaders(self, train_data, test_data, batch_size, timestep, need_yhist, shift_size):
+        pred, mse, mae = self.trainer.test(init_model, self.test_loader)
+        return pred, mse, mae
+    
+    def get_loaders(self, train_data, test_data, batch_size):
         """
         Get train, validation, and test DataLoaders
         
@@ -241,121 +198,33 @@ class Regression():
         :param test_data: test data with X and y
         :type test_data: dictionary
 
-        :param timestep: timestep
-        :type timestep: int
-
-        :param batch_size: batch_size
-        :type timestep: int
-
-        :param timestep: need_yhist
-        :type timestep: boolean
+        :param batch_size: batch size
+        :type batch_size: int
 
         :return: train, validation, and test dataloaders
         :rtype: DataLoader
         """
 
-        # 데이터 분할
         x = train_data['x']
         y = train_data['y']
         x_test = test_data['x']
         y_test = test_data['y']
 
-        if need_yhist == True:
-            # 데이터 전처리 수행
-            x, y, y_hist = sequence_preprocessing(x, y, timestep, need_yhist = need_yhist, shift_size = shift_size)
-            x_test, y_test, y_hist_test = sequence_preprocessing(x_test, y_test, timestep, need_yhist = need_yhist, shift_size = shift_size)
-            
-            # Train, validation Split
-            n_train = int(0.8 * len(x))
-            x_train, y_train, y_hist_train = x[:n_train], y[:n_train], y_hist[:n_train]
-            x_valid, y_valid, y_hist_valid = x[n_train:], y[n_train:], y_hist[n_train:]
-
-            # dataloader 구축
-            datasets = []
-
-            for dataset in [(x_train, y_train, y_hist_train), (x_valid, y_valid, y_hist_valid), (x_test, y_test, y_hist_test)]:
-                x_data = dataset[0]
-                y_data = dataset[1]
-                y_hist_data = dataset[2]
-                datasets.append(torch.utils.data.TensorDataset(torch.Tensor(x_data), torch.Tensor(y_data), torch.Tensor(y_hist_data)))
-
-        else:
-            # 데이터 전처리 수행
-            x, y, _ = sequence_preprocessing(x, y, timestep, need_yhist = need_yhist, shift_size = shift_size)
-            x_test, y_test, _ = sequence_preprocessing(x_test, y_test, timestep, need_yhist = need_yhist, shift_size = shift_size)
-            
-            # Train, validation Split
-            n_train = int(0.8 * len(x))
-            x_train, y_train = x[:n_train], y[:n_train]
-            x_valid, y_valid = x[n_train:], y[n_train:]
-
-            # dataloader 구축
-            datasets = []
-
-            for dataset in [(x_train, y_train), (x_valid, y_valid), (x_test, y_test)]:
-                x_data = dataset[0]
-                y_data = dataset[1]
-                datasets.append(torch.utils.data.TensorDataset(torch.Tensor(x_data), torch.Tensor(y_data)))
-            
-        # dataloader 생성
-        trainset, validset, testset = datasets[0], datasets[1], datasets[2]
-        train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-        valid_loader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
-
-        return train_loader, valid_loader, test_loader
-
-
-    def get_loaders_repr(self, train_data, test_data, batch_size):
-        """
-        Get train, validation, and test DataLoaders
-        
-        :param train_data: train data with X and y
-        :type train_data: dictionary
-
-        :param test_data: test data with X and y
-        :type test_data: dictionary
-
-        :param timestep: timestep
-        :type timestep: int
-
-        :param batch_size: batch_size
-        :type timestep: int
-
-        :param timestep: need_yhist
-        :type timestep: boolean
-
-        :return: train, validation, and test dataloaders
-        :rtype: DataLoader
-        """
-
-        # 데이터 분할
-        x = train_data['x']
-        y = train_data['y']
-        x_test = test_data['x']
-        y_test = test_data['y']
-
-
-
-        # Train, validation Split
+        # train data를 시간순으로 8:2의 비율로 train/validation set으로 분할
         n_train = int(0.8 * len(x))
         x_train, y_train = x[:n_train], y[:n_train]
         x_valid, y_valid = x[n_train:], y[n_train:]
 
-        # dataloader 구축
+        # train/validation/test 데이터셋 구축
         datasets = []
-
         for dataset in [(x_train, y_train), (x_valid, y_valid), (x_test, y_test)]:
-            x_data = dataset[0]
+            x_data = np.array(dataset[0])
             y_data = dataset[1]
             datasets.append(torch.utils.data.TensorDataset(torch.Tensor(x_data), torch.Tensor(y_data)))
-            
-        # dataloader 생성
+
+        # train/validation/test DataLoader 구축
         trainset, validset, testset = datasets[0], datasets[1], datasets[2]
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
         valid_loader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=True)
         test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
-
         return train_loader, valid_loader, test_loader
-
-        
