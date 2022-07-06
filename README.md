@@ -11,7 +11,7 @@
 * **training** : 모델 학습 여부, [True, False] 중 선택, 학습 완료된 모델이 저장되어 있다면 False 선택
 * **best_model_path** : 학습 완료된 모델을 저장할 경로
 
-* **시계열 분류 모델 hyperparameter :** 아래에 자세히 설명.
+* **시계열 회귀 모델 hyperparameter :** 아래에 자세히 설명.
   * LSTM hyperparameter 
   * GRU hyperparameter 
   * 1D-CNN hyperparameter
