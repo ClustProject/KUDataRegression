@@ -22,48 +22,39 @@
 
 #### 1. LSTM & GRU (w/o data representation)
 - **input_size** : 데이터의 변수 개수, int
-- **timestep** :  window_size의 크기, int(default: 10, 범위: 1이상)
-- **shift_size** : Slicing 시 shift 크기
 - **num_layers** : recurrent layers의 수, int(default: 2, 범위: 1 이상)
 - **hidden_size** : hidden state의 차원, int(default: 64, 범위: 1 이상)
 - **dropout** : dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
 - **bidirectional** : 모델의 양방향성 여부, bool(default: True)
-- **num_epochs** : 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-- **batch_size** : batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+- **num_epochs** : 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+- **batch_size** : batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
 - **lr** : learning rate, float(default: 0.0001, 범위: 0.1 이하)
 - **device** : 학습 환경, (default: 'cuda', ['cuda', 'cpu'] 중 선택)
-- **y_hist** : 과거 y정보 활용 유무, bool(default: False)
 <br>
 
 #### 2. 1D CNN (w/o data representation)
-- **input_size** : 데이터의 변수 개수, int
-- **timestep** :  window_size의 크기, int(default: 10, 범위: 1이상)
-- **shift_size** : Slicing 시 shift 크기
+- **input_size** : 데이터의 변수 개수, int\
 - **seq_len** : 데이터의 시간 길이, int
 - **output_channels** : convolution layer의 output channel, int(default: 64, 범위: 1 이상, 2의 지수로 설정 권장)
 - **kernel_size** : convolutional layer의 filter 크기, int(default: 3, 범위: 3 이상, 홀수로 설정 권장)
 - **stride** : convolution layer의 stride 크기, int(default: 1, 범위: 1 이상)
 - **padding** : padding 크기, int(default: 0, 범위: 0 이상)
 - **dropout** : dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
-- **num_epochs** : 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-- **batch_size** : batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+- **num_epochs** : 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+- **batch_size** : batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
 - **lr** : learning rate, float(default: 0.0001, 범위: 0.1 이하)
 - **device** : 학습 환경, (default: 'cuda', ['cuda', 'cpu'] 중 선택)
-- **y_hist** : 과거 y정보 활용 유무, bool(default: False)
 <br>
 
 #### 3.	LSTM-FCNs (w/o data representation)
 - **input_size** : 데이터의 변수 개수, int
-- **timestep** :  window_size의 크기, int(default: 10, 범위: 1이상)
-- **shift_size** : Slicing 시 shift 크기
-- **num_layers** : recurrent layers의 수, int(default: 1, 범위: 1 이상)
-- **lstm_drop_out** : LSTM dropout 확률, float(default: 0.4, 범위: 0 이상 1 이하)
+- **num_layers** : recurrent layers의 수, int(default: 2, 범위: 1 이상)
+- **lstm_drop_out** : LSTM dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
 - **fc_drop_out** : FC dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
-- **num_epochs** : 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-- **batch_size** : batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+- **num_epochs** : 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+- **batch_size** : batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
 - **lr** : learning rate, float(default: 0.0001, 범위: 0.1 이하)
 - **device** : 학습 환경, (default: 'cuda', ['cuda', 'cpu'] 중 선택)
-- **y_hist** : 과거 y정보 활용 유무, bool(default: False) 
 <br>
   
 <br><br>
@@ -87,9 +78,8 @@
 - **input_size** : 데이터의 변수 개수, int
 - **dropout** : dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
 - **bias** : bias 사용 여부, bool(default: True)
-- **num_epochs** : 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-- **batch_size** : batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+- **num_epochs** : 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+- **batch_size** : batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
 - **lr** : learning rate, float(default: 0.0001, 범위: 0.1 이하)
 - **device** : 학습 환경, (default: 'cuda', ['cuda', 'cpu'] 중 선택)
-- **y_hist** : 과거 y정보 활용 유무, bool(default: False)
 <br>
