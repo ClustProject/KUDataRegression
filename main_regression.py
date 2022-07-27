@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 import torch
 import torch.nn as nn
@@ -186,6 +187,9 @@ class Regression():
 
         # get prediction and accuracy
         pred, mse, mae = self.trainer.test(init_model, self.test_loader)
+        
+        # get prediction at original scale
+        pred = self.y_scaler.inverse_transform(pred.reshape(pred.shape[0], -1)).flatten()
         return pred, mse, mae
     
     def get_loaders(self, train_data, test_data, batch_size):
@@ -210,11 +214,35 @@ class Regression():
         x_test = test_data['x']
         y_test = test_data['y']
 
-        # train data를 시간순으로 8:2의 비율로 train/validation set으로 분할
-        n_train = int(0.8 * len(x))
-        x_train, y_train = x[:n_train], y[:n_train]
-        x_valid, y_valid = x[n_train:], y[n_train:]
-
+        # train data를 랜덤하게 8:2의 비율로 train/validation set으로 분할
+        x_train, x_valid, y_train, y_valid = train_test_split(x, y, test_size=0.2, random_state=42)
+        
+        # normalization of X data
+        scaler = StandardScaler()
+        if len(x.shape) < 3:
+            scaler = scaler.fit(x_train)
+        else:
+            origin_shape = x.shape
+            scaler = scaler.fit(np.transpose(x_train, (0, 2, 1)).reshape(-1, origin_shape[1]))
+        
+        scaled_x_data = []
+        for x_data in [x_train, x_valid, x_test]:
+            if len(x.shape) < 3:
+                scaler = scaler.fit(x_data)
+            else:
+                x_data = scaler.transform(np.transpose(x_data, (0, 2, 1)).reshape(-1, origin_shape[1]))
+                x_data = np.transpose(x_data.reshape(-1, origin_shape[2], origin_shape[1]), (0, 2, 1))
+            scaled_x_data.append(x_data)
+        x_train, x_valid, x_test = scaled_x_data
+        
+        # normalization of Y data
+        self.y_scaler = StandardScaler()
+        self.y_scaler = self.y_scaler.fit(y_train.reshape(y_train.shape[0], -1))
+        
+        y_train = self.y_scaler.transform(y_train.reshape(y_train.shape[0], -1)).flatten()
+        y_valid = self.y_scaler.transform(y_valid.reshape(y_valid.shape[0], -1)).flatten()
+        y_test = self.y_scaler.transform(y_test.reshape(y_test.shape[0], -1)).flatten()
+            
         # train/validation/test 데이터셋 구축
         datasets = []
         for dataset in [(x_train, y_train), (x_valid, y_valid), (x_test, y_test)]:
