@@ -1,8 +1,7 @@
-import numpy as np
-
 import torch
-import torch.nn as nn
-import torch.optim as optim
+import pandas as pd
+import numpy as np
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from models.train_model import Train_Test
 from models.lstm_fcn import LSTM_FCNs
@@ -15,58 +14,29 @@ warnings.filterwarnings('ignore')
 
 
 class Regression():
-    def __init__(self, config, train_data, test_data):
+    def __init__(self, config):
         """
-        Initialize Regression class and prepare dataloaders for training and testing
+        Initialize Regression class
 
         :param config: config
         :type config: dictionary
-
-        :param train_data: train data with X and y
-        :type train_data: dictionary
-
-        :param test_data: test data with X and y
-        :type test_data: dictionary
         
-        example
-            >>> config = {
-                    'model': 'LSTM', # classification에 활용할 알고리즘 정의, {'LSTM', 'GRU', 'CNN_1D', 'LSTM_FCNs', 'FC'} 중 택 1
-                    'training': True,  # 학습 여부, 저장된 학습 완료 모델 존재시 False로 설정
-                    'best_model_path': './ckpt/lstm.pt',  # 학습 완료 모델 저장 경로
-                    'parameter': {
-                        'input_size': 24,  # 데이터의 변수 개수, int
-                        'num_layers': 2,  # recurrent layers의 수, int(default: 2, 범위: 1 이상)
-                        'hidden_size': 64,  # hidden state의 차원, int(default: 64, 범위: 1 이상)
-                        'dropout': 0.1,  # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
-                        'bidirectional': True,  # 모델의 양방향성 여부, bool(default: True)
-                        'num_epochs': 150,  # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-                        'batch_size': 64,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
-                        'lr': 0.0001,  # learning rate, float(default: 0.001, 범위: 0.1 이하)
-                        'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
-                    }
-                }
-            >>> data_reg = mr.Regression(config, train_data, test_data)
-            >>> model = data_reg.build_model()  # 모델 구축
-            >>> if config["training"]:
-            >>>     best_model = data_reg.train_model(model)  # 모델 학습
-            >>>     data_reg.save_model(best_model, best_model_path=config["best_model_path"])  # 모델 저장
-            >>> pred, mse, mae = data_reg.pred_data(model, best_model_path=config["best_model_path"])  # 예측
+        example (training)
+            >>> model_name = 'lstm'
+            >>> model_params = config.model_config[model_name]
+            >>> data_reg = mr.Regression(model_params)
+            >>> best_model = data_reg.train_model(train_x, train_y, valid_x, valid_y)  # 모델 학습
+            >>> data_reg.save_model(best_model, best_model_path=model_params["best_model_path"])  # 모델 저장
+        
+        example (testing)
+
         """
 
-        self.config = config
-        self.model = config['model']
+        self.model_name = config['model']
         self.parameter = config['parameter']
 
-        self.train_data = train_data
-        self.test_data = test_data
-
-        # load dataloder
-        self.train_loader, self.valid_loader, self.test_loader = self.get_loaders(train_data=self.train_data,
-                                                                                  test_data=self.test_data,
-                                                                                  batch_size=self.parameter['batch_size'])
-
         # build trainer
-        self.trainer = Train_Test(self.config, self.train_loader, self.valid_loader, self.test_loader)
+        self.trainer = Train_Test(config)
 
     def build_model(self):
         """
@@ -77,7 +47,7 @@ class Regression():
         """
 
         # build initialized model
-        if self.model == 'LSTM':
+        if self.model_name == 'LSTM_rg':
             init_model = RNN_model(
                 rnn_type='lstm',
                 input_size=self.parameter['input_size'],
@@ -86,7 +56,7 @@ class Regression():
                 bidirectional=self.parameter['bidirectional'],
                 device=self.parameter['device']
             )
-        elif self.model == 'GRU':
+        elif self.model_name == 'GRU_rg':
             init_model = RNN_model(
                 rnn_type='gru',
                 input_size=self.parameter['input_size'],
@@ -95,7 +65,7 @@ class Regression():
                 bidirectional=self.parameter['bidirectional'],
                 device=self.parameter['device']
             )
-        elif self.model == 'CNN_1D':
+        elif self.model_name == 'CNN_1D_rg':
             init_model = CNN_1D(
                 input_channels=self.parameter['input_size'],
                 input_seq=self.parameter['seq_len'],
@@ -105,14 +75,14 @@ class Regression():
                 padding=self.parameter['padding'],
                 drop_out=self.parameter['drop_out']
             )
-        elif self.model == 'LSTM_FCNs':
+        elif self.model_name == 'LSTM_FCNs_rg':
             init_model = LSTM_FCNs(
                 input_size=self.parameter['input_size'],
                 num_layers=self.parameter['num_layers'],
                 lstm_drop_p=self.parameter['lstm_drop_out'],
                 fc_drop_p=self.parameter['fc_drop_out']
             )
-        elif self.model == 'FC':
+        elif self.model_name == 'FC_rg':
             init_model = FC(
                 representation_size=self.parameter['input_size'],
                 drop_out=self.parameter['drop_out'],
@@ -122,27 +92,41 @@ class Regression():
             print('Choose the model correctly')
         return init_model
 
-    def train_model(self, init_model):
+    def train_model(self, train_x, train_y, valid_x, valid_y):
         """
         Train model and return best model
 
         :param init_model: initialized model
         :type init_model: model
 
+        :param train_x: input train data 
+        :type train_x: numpy array
+
+        :param train_y: target train data 
+        :type train_y: numpy array
+
+        :param valid_x: input validation data 
+        :type valid_x: numpy array
+
+        :param valid_y: target validation data 
+        :type valid_y: numpy array
+
         :return: best trained model
         :rtype: model
         """
 
-        print("Start training model")
+        print(f"Start training model: {self.model_name}")
 
+        # build train/validation dataloaders
+        train_loader = self.get_dataloader(train_x, train_y, self.parameter['batch_size'], shuffle=True)
+        valid_loader = self.get_dataloader(valid_x, valid_y, self.parameter['batch_size'], shuffle=False)
+
+        # build initialized model
+        init_model = self.build_model()
+        
         # train model
-        init_model = init_model.to(self.parameter['device'])
-
-        dataloaders_dict = {'train': self.train_loader, 'val': self.valid_loader}
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(init_model.parameters(), lr=self.parameter['lr'])
-
-        best_model = self.trainer.train(init_model, dataloaders_dict, criterion, self.parameter['num_epochs'], optimizer)
+        dataloaders_dict = {'train': train_loader, 'val': valid_loader}
+        best_model = self.trainer.train(init_model, dataloaders_dict)
         return best_model
 
     def save_model(self, best_model, best_model_path):
@@ -159,11 +143,18 @@ class Regression():
         # save model
         torch.save(best_model.state_dict(), best_model_path)
 
-    def pred_data(self, init_model, best_model_path):
+    def pred_data(self, test_x, test_y, y_scaler, best_model_path):
         """
-        Predict class based on the best trained model
-        :param init_model: initialized model
-        :type model: model
+        Predict target value based on the best trained model
+
+        :param test_x: input test data
+        :type test_x: numpy array
+
+        :param test_y: target test data
+        :type test_y: numpy array
+
+        :param y_scaler: scaler fitted on y variable in train dataset
+        :type: MinMaxScaler
 
         :param best_model_path: path for loading the best trained model
         :type best_model_path: str
@@ -178,52 +169,59 @@ class Regression():
         :rtype: float
         """
 
-        print("\nStart testing data\n")
+        print(f"Start testing model: {self.model_name}")
+
+        # build test dataloader
+        test_loader = self.get_dataloader(test_x, test_y, self.parameter['batch_size'], shuffle=False)
+
+        # build initialized model
+        init_model = self.build_model()
 
         # load best model
         init_model.load_state_dict(torch.load(best_model_path))
 
-        # get prediction and accuracy
-        pred, mse, mae = self.trainer.test(init_model, self.test_loader)
-        return pred, mse, mae
-    
-    def get_loaders(self, train_data, test_data, batch_size):
-        """
-        Get train, validation, and test DataLoaders
-        
-        :param train_data: train data with X and y
-        :type train_data: dictionary
+        # get predicted values
+        pred_data = self.trainer.test(init_model, test_loader)  # shape: (num_of_instance, )
 
-        :param test_data: test data with X and y
-        :type test_data: dictionary
+        # inverse normalization to original scale
+        true_data = y_scaler.inverse_transform(np.expand_dims(test_y, axis=-1))
+        pred_data = y_scaler.inverse_transform(np.expand_dims(pred_data, axis=-1))
+        true_data = true_data.squeeze(-1)  # shape=(num_of_instance, )
+        pred_data = pred_data.squeeze(-1)  # shape=(num_of_instance, )
+
+        # calculate performance metrics
+        mse = mean_squared_error(true_data, pred_data)
+        mae = mean_absolute_error(true_data, pred_data)
+        
+        # merge true value and predicted value
+        pred_df = pd.DataFrame()
+        pred_df['actual_value'] = true_data
+        pred_df['predicted_value'] = pred_data
+        return pred_df, mse, mae
+    
+    def get_dataloader(self, x_data, y_data, batch_size, shuffle):
+        """
+        Get DataLoader
+        
+        :param x_data: input data
+        :type x_data: numpy array
+
+        :param y_data: target data
+        :type y_data: numpy array
 
         :param batch_size: batch size
         :type batch_size: int
 
-        :return: train, validation, and test dataloaders
+        :param shuffle: shuffle for making batch
+        :type shuffle: bool
+
+        :return: dataloader
         :rtype: DataLoader
         """
 
-        x = train_data['x']
-        y = train_data['y']
-        x_test = test_data['x']
-        y_test = test_data['y']
+        # torch dataset 구축
+        dataset = torch.utils.data.TensorDataset(torch.Tensor(x_data), torch.Tensor(y_data))
 
-        # train data를 시간순으로 8:2의 비율로 train/validation set으로 분할
-        n_train = int(0.8 * len(x))
-        x_train, y_train = x[:n_train], y[:n_train]
-        x_valid, y_valid = x[n_train:], y[n_train:]
-
-        # train/validation/test 데이터셋 구축
-        datasets = []
-        for dataset in [(x_train, y_train), (x_valid, y_valid), (x_test, y_test)]:
-            x_data = np.array(dataset[0])
-            y_data = dataset[1]
-            datasets.append(torch.utils.data.TensorDataset(torch.Tensor(x_data), torch.Tensor(y_data)))
-
-        # train/validation/test DataLoader 구축
-        trainset, validset, testset = datasets[0], datasets[1], datasets[2]
-        train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-        valid_loader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
-        return train_loader, valid_loader, test_loader
+        # DataLoader 구축
+        data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+        return data_loader

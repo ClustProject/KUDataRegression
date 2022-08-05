@@ -58,6 +58,7 @@ class LSTM_FCNs(nn.Module):
         self.convDrop = nn.Dropout(self.fc_drop_p)
 
         self.fc = nn.Linear(self.conv3_nf+self.num_lstm_out, 1)
+        self.sigmoid = nn.Sigmoid()
     
     def forward(self, x):
         # input x should be in size [B,T,F] , where B = Batch size
@@ -79,4 +80,5 @@ class LSTM_FCNs(nn.Module):
         
         x_all = torch.cat((x1,x2),dim=1)
         x_out = self.fc(x_all)
+        x_out = self.sigmoid(x_out)
         return x_out

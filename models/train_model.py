@@ -9,34 +9,20 @@ import torch.optim as optim
 
 
 class Train_Test():
-    def __init__(self, config, train_loader, valid_loader, test_loader):
+    def __init__(self, config):
         """
         Initialize Train_Test class
 
         :param config: configuration
         :type config: dictionary
-
-        :param train_loader: train dataloader
-        :type config: DataLoader
-
-        :param valid_loader: validation dataloader
-        :type config: DataLoader
-
-        :param test_loader: test dataloader
-        :type config: DataLoader
         """
 
-        self.config = config
-        self.train_loader = train_loader
-        self.valid_loader = valid_loader
-        self.test_loader = test_loader
+        self.model = config['model']
+        self.parameter = config['parameter']
+        self.num_epochs = self.parameter['num_epochs']
+        self.device = self.parameter['device']
 
-        self.model = self.config['model']
-        self.parameter = self.config['parameter']
-
-        self.input_size = self.parameter['input_size']
-
-    def train(self, model, dataloaders, criterion, num_epochs, optimizer):
+    def train(self, model, dataloaders):
         """
         Train the model
 
@@ -46,30 +32,25 @@ class Train_Test():
         :param dataloaders: train & validation dataloaders
         :type dataloaders: dictionary
 
-        :param criterion: loss function for training
-        :type criterion: criterion
-
-        :param num_epochs: the number of train epochs
-        :type num_epochs: int
-
-        :param optimizer: optimizer used in training
-        :type optimizer: optimizer
-
         :return: trained model
         :rtype: model
         """
 
         since = time.time()
 
+        model = model.to(self.device)
+        criterion = nn.MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=self.parameter['lr'])
+
         val_mse_history = []
 
         best_model_wts = copy.deepcopy(model.state_dict())
         best_mse = 10000000
 
-        for epoch in range(num_epochs):
-            if epoch == 0 or (epoch + 1) % 10 == 0:
+        for epoch in range(self.num_epochs):
+            if epoch == 0 or (epoch + 1) % 50 == 0:
                 print()
-                print('Epoch {}/{}'.format(epoch + 1, num_epochs))
+                print('Epoch {}/{}'.format(epoch + 1, self.num_epochs))
 
             # 각 epoch마다 순서대로 training과 validation을 진행
             for phase in ['train', 'val']:
@@ -83,8 +64,8 @@ class Train_Test():
 
                 # training과 validation 단계에 맞는 dataloader에 대하여 학습/검증 진행
                 for inputs, labels in dataloaders[phase]:
-                    inputs = inputs.to(self.parameter['device'])
-                    labels = labels.to(self.parameter['device'], dtype=torch.float)
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device, dtype=torch.float)
                     
                     # parameter gradients를 0으로 설정
                     optimizer.zero_grad()
@@ -109,7 +90,7 @@ class Train_Test():
                 # epoch의 loss 및 accuracy 도출
                 epoch_loss = running_loss / running_total
 
-                if epoch == 0 or (epoch + 1) % 10 == 0:
+                if epoch == 0 or (epoch + 1) % 50 == 0:
                     print('{} Loss: {:.4f}'.format(phase, epoch_loss))
 
                 # validation 단계에서 validation loss가 감소할 때마다 best model 가중치를 업데이트함
@@ -140,36 +121,23 @@ class Train_Test():
 
         :return: predicted values
         :rtype: numpy array
-
-        :return: test mse
-        :rtype: float
-
-        :return: test mae
-        :rtype: float
         """
-
+        
+        model = model.to(self.device)
         model.eval()   # 모델을 validation mode로 설정
         
         # test_loader에 대하여 검증 진행 (gradient update 방지)
         with torch.no_grad():
-            trues, preds = [], []
-
+            preds = []
             for inputs, labels in test_loader:
-                inputs = inputs.to(self.parameter['device'])
-                labels = labels.to(self.parameter['device'], dtype=torch.float)
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device, dtype=torch.float)
 
                 # forward
                 # input을 model에 넣어 output을 도출
                 outputs = model(inputs)
                 
                 # 예측 값 및 실제 값 축적
-                trues.extend(labels.detach().cpu().numpy())
                 preds.extend(outputs.detach().cpu().numpy())
-        
-        preds = np.array(preds).reshape(-1)
-        trues = np.array(trues)
-
-        mse = mean_squared_error(trues, preds)
-        mae = mean_absolute_error(trues, preds)
-        return preds, mse, mae
+        return np.array(preds).flatten()
     

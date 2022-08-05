@@ -17,7 +17,9 @@ class FC(nn.Module):
             nn.Dropout(drop_out),
             self.fc2
         )
-
+        self.sigmoid = nn.Sigmoid()
+        
     def forward(self, x):
         x = self.layer(x)
+        x = self.sigmoid(x)
         return x

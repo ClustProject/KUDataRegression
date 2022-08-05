@@ -25,6 +25,7 @@ class RNN_model(nn.Module):
         # bidirectional에 따른 fc layer 구축
         # bidirectional 여부에 따라 hidden state의 shape가 달라짐 (True: 2 * hidden_size, False: hidden_size)
         self.fc = nn.Linear(self.num_directions * hidden_size, 1)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # data dimension: (batch_size x input_size x seq_len) -> (batch_size x seq_len x input_size)로 변환
@@ -42,4 +43,5 @@ class RNN_model(nn.Module):
             out, _ = self.rnn(x, (h0, c0))  # out: tensor of shape (batch_size, seq_length, hidden_size)
         
         out = self.fc(out[:, -1, :])
+        out = self.sigmoid(out)
         return out

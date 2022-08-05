@@ -31,7 +31,7 @@ class CNN_1D(nn.Module):
         # fully-connected layer 구축
         self.dropout = nn.Dropout(drop_out)
         self.fc = nn.Linear(output_channels * next_seq, 1) # 이부분은 hyperparameter에 따라 계산을 해줘야 함
-
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = self.layer1(x)
@@ -39,4 +39,5 @@ class CNN_1D(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.dropout(x)
         x = self.fc(x)
+        x = self.sigmoid(x)
         return x
