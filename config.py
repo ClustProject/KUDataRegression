@@ -8,9 +8,9 @@ model_config = {
             'hidden_size': 64,  # hidden state의 차원, int(default: 64, 범위: 1 이상)
             'dropout': 0.1,  # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
             'bidirectional': True,  # 모델의 양방향성 여부, bool(default: True)
-            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-            'batch_size': 16,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
-            'lr': 0.0001,  # learning rate, float(default: 0.001, 범위: 0.1 이하)
+            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+            'batch_size': 16,  # batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+            'lr': 0.0001,  # learning rate, float(default: 0.0001, 범위: 0.1 이하)
             'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
         }
     },
@@ -23,9 +23,9 @@ model_config = {
             'hidden_size': 64,  # hidden state의 차원, int(default: 64, 범위: 1 이상)
             'dropout': 0.1,  # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
             'bidirectional': True,  # 모델의 양방향성 여부, bool(default: True)
-            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-            'batch_size': 16,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
-            'lr': 0.0001,  # learning rate, float(default: 0.001, 범위: 0.1 이하)
+            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+            'batch_size': 16,  # batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+            'lr': 0.0001,  # learning rate, float(default: 0.0001, 범위: 0.1 이하)
             'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
         }
     },
@@ -40,8 +40,8 @@ model_config = {
             'stride': 1, # convolution layer의 stride 크기, int(default: 1, 범위: 1 이상)
             'padding': 0, # padding 크기, int(default: 0, 범위: 0 이상)
             'drop_out': 0.1, # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
-            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-            'batch_size': 16,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+            'num_epochs': 1000,  # 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+            'batch_size': 16,  # batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
             'lr': 0.0001,  # learning rate, float(default: 0.0001, 범위: 0.1 이하)
             'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
         }
@@ -52,10 +52,10 @@ model_config = {
         'parameter': {
             'input_size': 24,  # 데이터의 변수 개수, int
             'num_layers': 2,  # recurrent layers의 수, int(default: 1, 범위: 1 이상)
-            'lstm_drop_out': 0.1, # LSTM dropout 확률, float(default: 0.4, 범위: 0 이상 1 이하)
+            'lstm_drop_out': 0.1, # LSTM dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
             'fc_drop_out': 0.1, # FC dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
-            'num_epochs': 1000, # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-            'batch_size': 16,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+            'num_epochs': 1000, # 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+            'batch_size': 16,  # batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
             'lr': 0.0001,  # learning rate, float(default: 0.0001, 범위: 0.1 이하)
             'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
         }
@@ -67,8 +67,8 @@ model_config = {
             'input_size': 64,  # 데이터의 변수 개수(representation 차원), int
             'drop_out': 0.1, # dropout 확률, float(default: 0.1, 범위: 0 이상 1 이하)
             'bias': True, # bias 사용 여부, bool(default: True)
-            'num_epochs': 1000, # 학습 epoch 횟수, int(default: 150, 범위: 1 이상)
-            'batch_size': 16,  # batch 크기, int(default: 64, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
+            'num_epochs': 1000, # 학습 epoch 횟수, int(default: 1000, 범위: 1 이상)
+            'batch_size': 16,  # batch 크기, int(default: 16, 범위: 1 이상, 컴퓨터 사양에 적합하게 설정)
             'lr': 0.0001,  # learning rate, float(default: 0.0001, 범위: 0.1 이하)
             'device': 'cuda'  # 학습 환경, ["cuda", "cpu"] 중 선택
         }
