@@ -29,7 +29,10 @@ class Regression():
             >>> data_reg.save_model(best_model, best_model_path=model_params["best_model_path"])  # 모델 저장
         
         example (testing)
-
+            >>> model_name = 'LSTM_rg'
+            >>> model_params = config.model_config[model_name]
+            >>> data_reg = mr.Regression(model_params)
+            >>> pred, mse, mae = data_reg.pred_data(test_x, test_y, y_scaler, best_model_path=model_params["best_model_path"])  # 예측
         """
 
         self.model_name = config['model']
@@ -95,9 +98,6 @@ class Regression():
     def train_model(self, train_x, train_y, valid_x, valid_y):
         """
         Train model and return best model
-
-        :param init_model: initialized model
-        :type init_model: model
 
         :param train_x: input train data 
         :type train_x: numpy array
