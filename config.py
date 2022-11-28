@@ -35,7 +35,7 @@ model_config = {
         'parameter': {
             'input_size': 24,  # 데이터의 변수 개수, int
             'seq_len': 144,  # 데이터의 시간 길이, int
-            'output_channels': 64, # convolution layer의 output channel, int(default: 64, 범위: 1 이상, 2의 지수로 설정 권장)
+            'output_channels': 32, # convolution layer의 output channel, int(default: 64, 범위: 1 이상, 2의 지수로 설정 권장)
             'kernel_size': 3, # convolutional layer의 filter 크기, int(default: 3, 범위: 3 이상, 홀수로 설정 권장)
             'stride': 1, # convolution layer의 stride 크기, int(default: 1, 범위: 1 이상)
             'padding': 0, # padding 크기, int(default: 0, 범위: 0 이상)
