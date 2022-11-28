@@ -1,6 +1,7 @@
 import torch
 import pandas as pd
 import numpy as np
+import os
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from models.train_model import Train_Test
@@ -139,6 +140,9 @@ class Regression():
         :param best_model_path: path for saving model
         :type best_model_path: str
         """
+        
+        # make folder to save model
+        os.makedirs('./ckpt', exist_ok=True)
 
         # save model
         torch.save(best_model.state_dict(), best_model_path)
