@@ -106,4 +106,6 @@ def get_plot(result_df):
         ax[i].legend()
     
     plt.title('Actual Values vs. Predicted Values')
+    plt.savefig('Actual vs Predicted Plot')
+    
     plt.show()
